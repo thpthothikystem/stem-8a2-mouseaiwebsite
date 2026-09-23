@@ -7,464 +7,898 @@
     <title>Mouse AI</title>
 
     <link rel="stylesheet" href="style.css">
+
+    <!-- ==================== MATHJAX ==================== -->
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [
+                    ['\\(', '\\)']
+                ],
+                displayMath: [
+                    ['\\[', '\\]']
+                ]
+            },
+
+            svg: {
+                fontCache: 'global'
+            }
+        };
+    </script>
+
+    <script
+        async
+        src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js">
+    </script>
 </head>
 
 <body>
 
-    <div class="stars"></div>
+    <!-- ==================== BACKGROUND ==================== -->
 
-    <div class="app">
+    <div class="background">
+        <div class="orb orb1"></div>
+        <div class="orb orb2"></div>
+        <div class="orb orb3"></div>
 
-        <header>
-            <div class="logo">
-                <div class="mouse-icon">●</div>
+        <div class="stars"></div>
+        <div class="stars stars2"></div>
+    </div>
 
-                <div>
-                    <h1>Mouse AI</h1>
-                    <p>Trợ lý Toán học của cậu</p>
+
+    <!-- ==================== MÀN HÌNH CHÀO ==================== -->
+
+    <section id="welcomeScreen" class="welcome-screen">
+
+        <div class="welcome-card">
+
+            <div class="mouse-logo">
+                <div class="ear left"></div>
+                <div class="ear right"></div>
+
+                <div class="mouse-face">
+                    <div class="eye left-eye"></div>
+                    <div class="eye right-eye"></div>
+
+                    <div class="nose"></div>
                 </div>
             </div>
 
-            <div class="status">
-                <span></span>
-                ONLINE
-            </div>
-        </header>
+            <h1>Mouse AI</h1>
 
+            <p class="welcome-subtitle">
+                Trợ lý Toán học
+            </p>
 
-        <main id="chat-box">
+            <p class="welcome-description">
+                Cùng cậu học Toán,
+                từng bước một.
+            </p>
 
-            <div class="message ai-msg welcome">
-                <div class="ai-name">Mouse AI</div>
+            <p class="stem-text">
+                Sản phẩm STEM của lớp 8A2
+            </p>
 
-                <div class="bubble">
-                    Chào cậu! Có bài Toán nào cần tớ giúp không?
-                </div>
-            </div>
+            <button
+                id="startButton"
+                class="start-button"
+                onclick="startMouseAI()">
 
-        </main>
+                BẮT ĐẦU
 
-
-        <div class="input-area">
-
-            <input
-                type="text"
-                id="user-input"
-                placeholder="Nhập bài Toán của cậu..."
-                autocomplete="off"
-            >
-
-            <button onclick="sendMessage()">
-                Gửi
             </button>
 
         </div>
 
-    </div>
+    </section>
 
+
+    <!-- ==================== APP ==================== -->
+
+    <main id="app" class="app hidden">
+
+        <!-- HEADER -->
+
+        <header class="header">
+
+            <div class="brand">
+
+                <div class="small-mouse">
+                    <div class="small-ear left"></div>
+                    <div class="small-ear right"></div>
+
+                    <div class="small-face">
+                        <div class="small-eye"></div>
+                        <div class="small-eye"></div>
+                    </div>
+                </div>
+
+                <div>
+                    <h2>Mouse AI</h2>
+
+                    <span>
+                        Trợ lý Toán học
+                    </span>
+                </div>
+
+            </div>
+
+
+            <div class="header-right">
+
+                <div class="online">
+
+                    <span class="online-dot"></span>
+
+                    ONLINE
+
+                </div>
+
+                <button
+                    class="clear-button"
+                    onclick="clearMemory()">
+
+                    Xóa memory
+
+                </button>
+
+            </div>
+
+        </header>
+
+
+        <!-- CHAT -->
+
+        <section
+            id="chatBox"
+            class="chat-box">
+
+        </section>
+
+
+        <!-- INPUT -->
+
+        <div class="input-area">
+
+            <div class="input-container">
+
+                <textarea
+                    id="userInput"
+                    rows="1"
+                    placeholder="Nhập câu hỏi Toán của cậu..."
+                    onkeydown="handleKey(event)"
+                ></textarea>
+
+                <button
+                    id="sendButton"
+                    class="send-button"
+                    onclick="sendMessage()">
+
+                    <span>➤</span>
+
+                </button>
+
+            </div>
+
+            <div class="input-hint">
+                Enter để gửi · Shift + Enter để xuống dòng
+            </div>
+
+        </div>
+
+    </main>
+
+
+    <!-- ==================== JAVASCRIPT ==================== -->
 
     <script>
 
-        // =========================
-        // API KEY
-        // =========================
+        /* =========================================
+           API
+        ========================================= */
 
         const API_KEY = "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";
 
+        const API_URL =
+            "https://api.groq.com/openai/v1/chat/completions";
 
-        // =========================
-        // MODEL
-        // =========================
-
-        const MODEL = "openai/gpt-oss-20b";
+        const MODEL =
+            "openai/gpt-oss-20b";
 
 
-        // =========================
-        // BIẾN
-        // =========================
+        /* =========================================
+           MEMORY
+        ========================================= */
+
+        const MEMORY_KEY =
+            "mouse_ai_memory";
+
+        let memory = [];
+
+        try {
+
+            memory =
+                JSON.parse(
+                    localStorage.getItem(MEMORY_KEY)
+                ) || [];
+
+        } catch {
+
+            memory = [];
+
+        }
+
+
+        /* =========================================
+           DOM
+        ========================================= */
+
+        const welcomeScreen =
+            document.getElementById("welcomeScreen");
+
+        const app =
+            document.getElementById("app");
 
         const chatBox =
-            document.getElementById("chat-box");
+            document.getElementById("chatBox");
 
         const userInput =
-            document.getElementById("user-input");
+            document.getElementById("userInput");
 
-        let lastMessage = "";
-
-
-        // =========================
-        // ENTER ĐỂ GỬI
-        // =========================
-
-        userInput.addEventListener("keydown", function(event) {
-
-            if (event.key === "Enter") {
-                sendMessage();
-            }
-
-        });
+        const sendButton =
+            document.getElementById("sendButton");
 
 
-        // =========================
-        // GỬI TIN NHẮN
-        // =========================
+        /* =========================================
+           SYSTEM PROMPT
+        ========================================= */
 
-        async function sendMessage(isRetry = false) {
+        const SYSTEM_PROMPT = `
 
-            const text = isRetry
-                ? lastMessage
-                : userInput.value.trim();
+Bạn là Mouse AI, một trợ lý dạy Toán cho học sinh.
+
+PHONG CÁCH:
+
+- Luôn xưng "tớ", gọi người dùng là "cậu".
+- Thân thiện, tự nhiên.
+- Nói dễ hiểu.
+- Không dùng văn phong quá formal.
+- Không lan man.
+- Câu trả lời nên vừa đủ, không dài không cần thiết.
+- Khi bài Toán khó, giải từng bước rõ ràng.
+- Ưu tiên cách giải đơn giản, phù hợp với học sinh.
+- Nếu có nhiều cách giải, ưu tiên cách dễ hiểu trước.
+- Không tự bịa đề bài hoặc dữ kiện.
+- Nếu thiếu dữ kiện thì hỏi lại.
+
+QUY TẮC TRÌNH BÀY TOÁN:
+
+- Luôn dùng LaTeX khi viết công thức Toán.
+- Công thức nằm trong câu dùng:
+  \\( ... \\)
+
+- Công thức quan trọng hoặc dài dùng:
+  \\[
+  ...
+  \\]
+
+- Phân số phải dùng:
+  \\frac{a}{b}
+
+- Số mũ phải dùng:
+  x^2
+  x^{n+1}
+
+- Căn phải dùng:
+  \\sqrt{x}
+  \\sqrt{x+1}
+
+- Chỉ số phải dùng:
+  a_1
+  a_n
+
+- Không viết phân số kiểu 1/2 nếu có thể dùng LaTeX.
+- Không viết công thức Toán thành một dòng dài khó đọc.
+- Khi giải phương trình, nên xuống dòng từng bước.
+
+VÍ DỤ:
+
+Ta có:
+
+\\[
+2x+3=7
+\\]
+
+Chuyển 3 sang vế phải:
+
+\\[
+2x=7-3
+\\]
+
+Suy ra:
+
+\\[
+2x=4
+\\]
+
+Chia hai vế cho 2:
+
+\\[
+x=2
+\\]
+
+Vậy \\(x=2\\).
+
+Hãy trình bày lời giải sạch sẽ, dễ đọc và giống cách một người bạn đang chỉ bài.
+`;
 
 
-            if (!text) {
-                return;
-            }
+        /* =========================================
+           START APP
+        ========================================= */
+
+        function startMouseAI() {
+
+            welcomeScreen.classList.add("hide");
+
+            setTimeout(() => {
+
+                welcomeScreen.style.display = "none";
+
+                app.classList.remove("hidden");
+
+                loadMemory();
+
+                userInput.focus();
+
+            }, 500);
+
+        }
 
 
-            lastMessage = text;
+        /* =========================================
+           ESCAPE HTML
+        ========================================= */
+
+        function escapeHTML(text) {
+
+            const div =
+                document.createElement("div");
+
+            div.textContent = text;
+
+            return div.innerHTML;
+
+        }
 
 
-            // =========================
-            // TIN NHẮN USER
-            // =========================
+        /* =========================================
+           SCROLL
+        ========================================= */
 
-            if (!isRetry) {
-
-                const userMessage =
-                    document.createElement("div");
-
-                userMessage.className =
-                    "message user-msg";
-
-                const name =
-                    document.createElement("div");
-
-                name.className =
-                    "user-name";
-
-                name.textContent =
-                    "Cậu";
-
-
-                const bubble =
-                    document.createElement("div");
-
-                bubble.className =
-                    "bubble";
-
-                bubble.textContent =
-                    text;
-
-
-                userMessage.appendChild(name);
-                userMessage.appendChild(bubble);
-
-                chatBox.appendChild(userMessage);
-
-                userInput.value = "";
-
-            }
-            else {
-
-                const oldError =
-                    document.getElementById("error-msg");
-
-                if (oldError) {
-                    oldError.remove();
-                }
-
-            }
-
+        function scrollChat() {
 
             chatBox.scrollTop =
                 chatBox.scrollHeight;
 
-
-            // =========================
-            // ĐANG SUY NGHĨ
-            // =========================
-
-            const typingId =
-                "typing-" + Date.now();
+        }
 
 
-            const typing =
+        /* =========================================
+           USER MESSAGE
+        ========================================= */
+
+        function addUserMessage(text) {
+
+            const message =
                 document.createElement("div");
 
-            typing.id =
-                typingId;
-
-            typing.className =
-                "message ai-msg";
-
-
-            const name =
-                document.createElement("div");
-
-            name.className =
-                "ai-name";
-
-            name.textContent =
-                "Mouse AI";
+            message.className =
+                "message user-message";
 
 
             const bubble =
                 document.createElement("div");
 
             bubble.className =
-                "bubble typing";
-
-            bubble.innerHTML =
-                "<span></span><span></span><span></span>";
+                "chat-bubble user-bubble";
 
 
-            typing.appendChild(name);
-            typing.appendChild(bubble);
+            bubble.textContent =
+                text;
 
-            chatBox.appendChild(typing);
 
-            chatBox.scrollTop =
-                chatBox.scrollHeight;
+            message.appendChild(bubble);
+
+            chatBox.appendChild(message);
+
+            scrollChat();
+
+        }
+
+
+        /* =========================================
+           AI MESSAGE
+        ========================================= */
+
+        function addAIMessage(text) {
+
+            const message =
+                document.createElement("div");
+
+            message.className =
+                "message ai-message";
+
+
+            const avatar =
+                document.createElement("div");
+
+            avatar.className =
+                "ai-avatar";
+
+            avatar.innerHTML =
+                "M";
+
+
+            const bubble =
+                document.createElement("div");
+
+            bubble.className =
+                "chat-bubble ai-bubble";
+
+
+            /*
+                textContent giúp AI không thể
+                chèn HTML linh tinh vào trang.
+
+                MathJax vẫn đọc được LaTeX.
+            */
+
+            bubble.textContent =
+                text;
+
+
+            message.appendChild(avatar);
+
+            message.appendChild(bubble);
+
+            chatBox.appendChild(message);
+
+
+            /*
+                Render LaTeX
+            */
+
+            if (window.MathJax) {
+
+                MathJax.typesetPromise([
+                    bubble
+                ]).catch(() => {});
+
+            }
+
+
+            scrollChat();
+
+        }
+
+
+        /* =========================================
+           TYPING
+        ========================================= */
+
+        function addTyping() {
+
+            const message =
+                document.createElement("div");
+
+            message.id =
+                "typingMessage";
+
+            message.className =
+                "message ai-message";
+
+
+            const avatar =
+                document.createElement("div");
+
+            avatar.className =
+                "ai-avatar";
+
+            avatar.innerHTML =
+                "M";
+
+
+            const bubble =
+                document.createElement("div");
+
+            bubble.className =
+                "chat-bubble ai-bubble typing";
+
+
+            bubble.innerHTML = `
+
+                <span></span>
+                <span></span>
+                <span></span>
+
+            `;
+
+
+            message.appendChild(avatar);
+
+            message.appendChild(bubble);
+
+            chatBox.appendChild(message);
+
+            scrollChat();
+
+        }
+
+
+        /* =========================================
+           REMOVE TYPING
+        ========================================= */
+
+        function removeTyping() {
+
+            const typing =
+                document.getElementById(
+                    "typingMessage"
+                );
+
+            if (typing) {
+
+                typing.remove();
+
+            }
+
+        }
+
+
+        /* =========================================
+           SAVE MEMORY
+        ========================================= */
+
+        function saveMemory() {
+
+            /*
+                Chỉ giữ 30 message gần nhất
+            */
+
+            if (memory.length > 30) {
+
+                memory =
+                    memory.slice(-30);
+
+            }
+
+
+            localStorage.setItem(
+                MEMORY_KEY,
+                JSON.stringify(memory)
+            );
+
+        }
+
+
+        /* =========================================
+           LOAD MEMORY
+        ========================================= */
+
+        function loadMemory() {
+
+            chatBox.innerHTML = "";
+
+
+            if (
+                !memory ||
+                memory.length === 0
+            ) {
+
+                addAIMessage(
+                    "Chào cậu! Có bài Toán nào cần tớ giúp không?"
+                );
+
+                return;
+
+            }
+
+
+            for (const message of memory) {
+
+                if (
+                    message.role === "user"
+                ) {
+
+                    addUserMessage(
+                        message.content
+                    );
+
+                }
+
+                else if (
+                    message.role === "assistant"
+                ) {
+
+                    addAIMessage(
+                        message.content
+                    );
+
+                }
+
+            }
+
+
+            /*
+                Render lại toàn bộ công thức
+            */
+
+            if (window.MathJax) {
+
+                MathJax.typesetPromise([
+                    chatBox
+                ]).catch(() => {});
+
+            }
+
+        }
+
+
+        /* =========================================
+           SEND MESSAGE
+        ========================================= */
+
+        async function sendMessage() {
+
+            const text =
+                userInput.value.trim();
+
+
+            if (!text) {
+
+                return;
+
+            }
+
+
+            /*
+                Không cho gửi nhiều lần
+            */
+
+            sendButton.disabled =
+                true;
+
+            userInput.disabled =
+                true;
+
+
+            /* Hiện tin nhắn user */
+
+            addUserMessage(text);
+
+
+            /* Lưu vào memory */
+
+            memory.push({
+
+                role: "user",
+
+                content: text
+
+            });
+
+
+            saveMemory();
+
+
+            userInput.value = "";
+
+
+            addTyping();
 
 
             try {
 
-                // =========================
-                // GỌI GROQ
-                // =========================
+                const messages = [
 
-                const response = await fetch(
-                    "https://api.groq.com/openai/v1/chat/completions",
                     {
-                        method: "POST",
+                        role: "system",
 
-                        headers: {
-                            "Content-Type": "application/json",
+                        content:
+                            SYSTEM_PROMPT
+                    },
 
-                            "Authorization":
-                                "Bearer " + API_KEY
-                        },
+                    ...memory
 
-                        body: JSON.stringify({
+                ];
 
-                            model: MODEL,
 
-                            messages: [
+                const response =
+                    await fetch(
+                        API_URL,
+                        {
+                            method: "POST",
 
-                                {
-                                    role: "system",
+                            headers: {
 
-                                    content: `
-Bạn là Mouse AI, một trợ lý dạy Toán.
+                                "Content-Type":
+                                    "application/json",
 
-- Luôn xưng "tớ", gọi người dùng là "cậu".
-- Thân thiện, tự nhiên, nói ngắn gọn.
-- Giải thích Toán dễ hiểu, ưu tiên từng bước rõ ràng.
-- Không dùng lời văn quá formal hoặc kiểu AI.
-- Khi người dùng hỏi bài, tập trung giải đúng bài đó.
-- Nếu có nhiều cách giải, ưu tiên cách đơn giản và phù hợp với học sinh.
-- Không lan man sang những thứ không liên quan.
-`
-                                },
+                                "Authorization":
+                                    "Bearer " +
+                                    API_KEY
 
-                                {
-                                    role: "user",
-                                    content: text
-                                }
+                            },
 
-                            ]
+                            body: JSON.stringify({
 
-                        })
-                    }
-                );
+                                model: MODEL,
+
+                                messages: messages,
+
+                                temperature: 0.4,
+
+                                max_tokens: 2048
+
+                            })
+
+                        }
+                    );
+
+
+                if (!response.ok) {
+
+                    throw new Error(
+                        "API error"
+                    );
+
+                }
 
 
                 const data =
                     await response.json();
 
 
-                // =========================
-                // XÓA LOADING
-                // =========================
-
-                const oldTyping =
-                    document.getElementById(typingId);
-
-                if (oldTyping) {
-                    oldTyping.remove();
-                }
+                const answer =
+                    data
+                        ?.choices?.[0]
+                        ?.message?.content;
 
 
-                // =========================
-                // LỖI
-                // =========================
+                if (!answer) {
 
-                if (!response.ok) {
-
-                    console.log(
-                        "Groq error:",
-                        data
+                    throw new Error(
+                        "Không nhận được câu trả lời"
                     );
 
-                    showError();
-
-                    return;
                 }
 
 
-                // =========================
-                // LẤY CÂU TRẢ LỜI
-                // =========================
-
-                const aiReply =
-                    data.choices?.[0]?.message?.content
-                    || "Tớ bị kẹt chữ mất rồi.";
+                removeTyping();
 
 
-                // =========================
-                // HIỆN AI
-                // =========================
-
-                const aiMessage =
-                    document.createElement("div");
-
-                aiMessage.className =
-                    "message ai-msg";
+                addAIMessage(answer);
 
 
-                const aiName =
-                    document.createElement("div");
+                /*
+                    Lưu câu trả lời AI
+                */
 
-                aiName.className =
-                    "ai-name";
+                memory.push({
 
-                aiName.textContent =
-                    "Mouse AI";
+                    role: "assistant",
 
+                    content: answer
 
-                const bubble =
-                    document.createElement("div");
-
-                bubble.className =
-                    "bubble";
+                });
 
 
-                bubble.innerHTML =
-                    aiReply
-                        .replace(/&/g, "&amp;")
-                        .replace(/</g, "&lt;")
-                        .replace(/>/g, "&gt;")
-                        .replace(/\n/g, "<br>");
-
-
-                aiMessage.appendChild(aiName);
-                aiMessage.appendChild(bubble);
-
-                chatBox.appendChild(aiMessage);
-
-
-                chatBox.scrollTop =
-                    chatBox.scrollHeight;
+                saveMemory();
 
             }
-
-
-            // =========================
-            // LỖI KẾT NỐI
-            // =========================
 
             catch (error) {
 
-                console.log(
-                    "Error:",
-                    error
+                console.error(error);
+
+                removeTyping();
+
+
+                addAIMessage(
+                    "Tớ đang gặp lỗi kết nối với AI. Cậu thử lại nhé."
                 );
 
-
-                const oldTyping =
-                    document.getElementById(typingId);
-
-                if (oldTyping) {
-                    oldTyping.remove();
-                }
+            }
 
 
-                showError();
+            sendButton.disabled =
+                false;
+
+            userInput.disabled =
+                false;
+
+            userInput.focus();
+
+        }
+
+
+        /* =========================================
+           ENTER
+        ========================================= */
+
+        function handleKey(event) {
+
+            if (
+                event.key === "Enter" &&
+                !event.shiftKey
+            ) {
+
+                event.preventDefault();
+
+                sendMessage();
 
             }
 
         }
 
 
-        // =========================
-        // HIỆN LỖI
-        // =========================
+        /* =========================================
+           CLEAR MEMORY
+        ========================================= */
 
-        function showError() {
+        function clearMemory() {
 
-            const errorBox =
-                document.createElement("div");
-
-            errorBox.id =
-                "error-msg";
-
-            errorBox.className =
-                "message ai-msg";
+            const ok =
+                confirm(
+                    "Cậu có chắc muốn xóa toàn bộ cuộc trò chuyện không?"
+                );
 
 
-            const name =
-                document.createElement("div");
+            if (!ok) {
 
-            name.className =
-                "ai-name";
+                return;
 
-            name.textContent =
-                "Mouse AI";
+            }
 
 
-            const bubble =
-                document.createElement("div");
-
-            bubble.className =
-                "bubble error";
+            memory = [];
 
 
-            const text =
-                document.createElement("span");
-
-            text.textContent =
-                "Có lỗi kết nối.";
+            localStorage.removeItem(
+                MEMORY_KEY
+            );
 
 
-            const retry =
-                document.createElement("button");
-
-            retry.className =
-                "retry-btn";
-
-            retry.textContent =
-                "Thử lại";
+            chatBox.innerHTML = "";
 
 
-            retry.onclick =
-                function() {
-                    sendMessage(true);
-                };
-
-
-            bubble.appendChild(text);
-            bubble.appendChild(retry);
-
-            errorBox.appendChild(name);
-            errorBox.appendChild(bubble);
-
-            chatBox.appendChild(errorBox);
-
-
-            chatBox.scrollTop =
-                chatBox.scrollHeight;
+            addAIMessage(
+                "Đã xóa memory. Bắt đầu lại nhé, cậu!"
+            );
 
         }
+
+
+        /* =========================================
+           AUTO RESIZE TEXTAREA
+        ========================================= */
+
+        userInput.addEventListener(
+            "input",
+            () => {
+
+                userInput.style.height =
+                    "auto";
+
+                userInput.style.height =
+                    Math.min(
+                        userInput.scrollHeight,
+                        140
+                    ) + "px";
+
+            }
+        );
 
     </script>
 
