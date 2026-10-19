@@ -1,0 +1,1446 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Mouse AI</title>
+
+<link rel="stylesheet" href="style.css">
+
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+<script>
+window.MathJax={
+    tex:{
+        inlineMath:[['\\(','\\)']],
+        displayMath:[['\\[','\\]']]
+    },
+    svg:{
+        fontCache:'global'
+    }
+};
+</script>
+
+<script async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+</head>
+
+<body>
+
+<div class="bg">
+    <div class="orb orb1"></div>
+    <div class="orb orb2"></div>
+    <div class="orb orb3"></div>
+    <div class="stars"></div>
+</div>
+
+<div id="welcome" class="welcome">
+
+    <div class="welcome-logo">M</div>
+
+    <h1>Mouse AI</h1>
+
+    <p>
+        Kham pha the gioi STEM cua MOUSE AI de hoc lap trinh , robotics va cac kien thuc ve khoa hoc may tinh.
+    </p>
+
+    <span>San pham STEM cua lop 8A2</span>
+
+    <button onclick="startChat()">B?T �?U</button>
+
+</div>
+
+<div id="app" class="app hidden">
+
+    <header>
+
+        <div class="brand">
+
+            <div class="logo">M</div>
+
+            <div>
+                <h2>Mouse AI</h2>
+
+                <div class="status">
+                    <span></span>
+                    ONLINE
+                </div>
+            </div>
+
+        </div>
+
+        <button class="clear-btn" onclick="clearMemory()">
+            Xóa memory
+        </button>
+
+    </header>
+
+    <main id="chatBox" class="chat-box"></main>
+
+    <div class="input-area">
+
+        <textarea
+            id="input"
+            placeholder="Hoi MOUSE AI bang cach nhan truc tiep hoac dan anh vao..."
+            rows="1"
+        ></textarea>
+
+        <button class="send-btn" onclick="sendMessage()">
+            ➤
+        </button>
+
+    </div>
+
+</div>
+
+<script>
+
+/* =========================================================
+   CONFIG
+========================================================= */
+
+const GROQ_API_KEY="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";
+
+const GEMINI_API_KEY="AQ.Ab8RN6JFhhm4EfTn0Tu-Awu3syRuWR8CIwCZ6Dk-cCOI3TW16A";
+
+const GROQ_API_URL=
+    "https://api.groq.com/openai/v1/chat/completions";
+
+const GROQ_MODEL=
+    "qwen/qwen3.8-27b";
+
+const GEMINI_MODEL=
+    "gemini-3.8-flash";
+
+const GEMINI_API_URL=
+    "https://generativelanguage.googleapis.com/v1beta/models/"
+    + GEMINI_MODEL
+    + ":generateContent";
+
+const API_MEMORY_LIMIT=8;
+
+
+/* =========================================================
+   STEM KNOWLEDGE
+========================================================= */
+
+const STEM_KNOWLEDGE=`
+
+KIẾN THỨC NỀN MOUSE AI
+
+[PHẠM VI]
+
+Mouse AI là trợ lý AI đa năng.
+
+Câu hỏi thông thường:
+- Trả lời tự nhiên.
+- Không cố biến mọi câu hỏi thành STEM.
+
+Câu hỏi STEM:
+- Ưu tiên chính xác.
+- Giải thích dễ hiểu.
+- Không bịa thông số phần cứng.
+- Không chắc thì nói rõ.
+
+--------------------------------------------------
+PYTHON
+--------------------------------------------------
+
+Hỗ trợ:
+- Python cơ bản.
+- Biến, kiểu dữ liệu.
+- if / elif / else.
+- for / while.
+- list, tuple, dictionary.
+- function.
+- input / output.
+- chuỗi.
+- thuật toán cơ bản.
+- debug.
+- giải thích code.
+- tối ưu phù hợp.
+
+Khi debug:
+1. Chỉ ra lỗi.
+2. Chỉ vị trí.
+3. Giải thích nguyên nhân.
+4. Cách sửa.
+
+--------------------------------------------------
+BLOCKLY
+--------------------------------------------------
+
+Hỗ trợ:
+- Giải thích block.
+- Flow chương trình.
+- Chuyển ý tưởng thành Blockly.
+- Phân tích logic.
+- Tìm lỗi logic từ ảnh/code đủ rõ.
+
+Không được giả định block không nhìn thấy.
+
+--------------------------------------------------
+ARDUINO
+--------------------------------------------------
+
+Hỗ trợ:
+- Digital input/output.
+- Analog input.
+- PWM.
+- Serial.
+- delay / millis.
+- pinMode.
+- digitalRead / digitalWrite.
+- analogRead / analogWrite.
+- Servo.
+- I2C / Wire.
+- SPI.
+- thư viện.
+- cảm biến.
+- motor.
+- nguồn.
+- GND.
+- 5V / 3.3V.
+- VIN.
+- wiring.
+- troubleshooting.
+
+Khi phân tích mạch:
+- Phân biệt pin, dây, module, linh kiện.
+- Không kết luận dây sai nếu ảnh không đủ rõ.
+- Không đoán giá trị linh kiện nếu không xác định được.
+
+--------------------------------------------------
+OHSTEM
+--------------------------------------------------
+
+Hỗ trợ:
+- OhStem K2.
+- OhStem K3.
+- ORC / ORC Hub.
+- Control Hub.
+- motor.
+- servo.
+- encoder.
+- cảm biến khoảng cách.
+- cảm biến dò line.
+- IMU / gyro.
+- nút bấm.
+- block.
+- Python.
+- Arduino C.
+- robot mecanum.
+- lỗi chuyển động.
+- lỗi sensor.
+- lỗi motor.
+- pairing.
+- logic điều khiển.
+
+Không tự bịa pin mapping hoặc thông số model.
+
+--------------------------------------------------
+ROBOTICS
+--------------------------------------------------
+
+Hỗ trợ:
+- motor.
+- servo.
+- encoder.
+- line following.
+- tránh vật cản.
+- tốc độ.
+- PID.
+- mecanum.
+- điều khiển hướng.
+- sensor logic.
+- debug robot.
+- wiring.
+- code điều khiển.
+
+Không kết luận phần cứng hỏng chỉ từ một triệu chứng.
+
+--------------------------------------------------
+KHOA HỌC / STEM
+--------------------------------------------------
+
+Hỗ trợ:
+- Toán.
+- Vật lý.
+- Hóa học.
+- Sinh học.
+- Kỹ thuật.
+- Công nghệ.
+
+Không biết thì không bịa.
+
+`;
+
+
+/* =========================================================
+   SYSTEM PROMPT
+========================================================= */
+
+const SYSTEM_PROMPT=`
+
+Bạn là Mouse AI.
+
+Bạn là trợ lý AI đa năng, chuyên sâu hơn về:
+- Python
+- Blockly
+- Arduino
+- OhStem K2
+- OhStem K3
+- Robotics
+- Electronics
+- STEM image analysis
+- Toán và khoa học
+
+${STEM_KNOWLEDGE}
+
+==================================================
+PHONG CÁCH
+==================================================
+
+- Luôn xưng "tớ", gọi người dùng là "cậu".
+- Tự nhiên, thân thiện.
+- Không formal quá mức.
+- Trả lời ngắn gọn hơn bình thường khoảng 25%.
+- Không lan man.
+- Chỉ giải thích những phần cần thiết.
+- Với câu đơn giản: trả lời ngắn.
+- Với vấn đề khó: chia bước nhưng không giải thích thừa.
+- Không tự bịa dữ kiện.
+- Không chắc thì nói rõ.
+
+==================================================
+PHÂN LOẠI
+==================================================
+
+1. Câu hỏi thông thường
+2. STEM
+3. STEM + hình ảnh
+
+Câu hỏi thông thường:
+→ Trả lời bình thường.
+
+STEM:
+→ Áp dụng kiến thức STEM.
+
+Có ảnh:
+→ Kiểm tra ảnh có liên quan STEM không.
+
+==================================================
+QUY TẮC ẢNH
+==================================================
+
+Nếu ảnh KHÔNG liên quan STEM:
+→ Không cố phân tích.
+→ Nói ngắn rằng Mouse AI chưa hỗ trợ loại ảnh đó.
+
+Nếu ảnh STEM:
+→ Chỉ phân tích những gì thực sự nhìn thấy.
+
+Nếu ảnh:
+- mờ
+- thiếu góc
+- bị che
+- không rõ pin
+- không rõ dây
+- không xác định linh kiện
+- thiếu thông tin quan trọng
+
+→ KHÔNG ĐƯỢC ĐOÁN.
+
+Phải nói:
+
+"Ảnh chưa đủ để xác định."
+
+Sau đó nói ngắn gọn cần thêm gì.
+
+==================================================
+TROUBLESHOOTING
+==================================================
+
+Nếu xác định được lỗi:
+
+1. Lỗi nằm ở đâu.
+2. Sai như thế nào.
+3. Vì sao.
+4. Cách sửa.
+
+Nếu ảnh không đủ bằng chứng:
+→ "Ảnh chưa đủ để xác định."
+
+Không được bịa lỗi wiring, pin hoặc phần cứng.
+
+==================================================
+DEBUG CODE
+==================================================
+
+Khi có code:
+- Chỉ lỗi cụ thể.
+- Chỉ vị trí.
+- Giải thích nguyên nhân.
+- Đưa cách sửa.
+- Không sửa những phần không cần thiết.
+
+==================================================
+TRÌNH BÀY
+==================================================
+
+Dùng Markdown.
+
+Công thức:
+
+\\\\( ... \\\\)
+
+hoặc
+
+\\\\[
+...
+\\\\]
+
+==================================================
+QUAN TRỌNG
+==================================================
+
+Không phải câu hỏi nào cũng cần STEM.
+
+Không phải ảnh nào cũng cần phân tích.
+
+Không được bịa thông số Arduino/OhStem.
+
+Không được bịa pin mapping.
+
+Không được bịa lỗi wiring.
+
+Nếu không đủ bằng chứng:
+→ nói rõ giới hạn.
+
+Được tạo ra bởi KhangIuCauNhiuhjhj.
+`;
+
+
+/* =========================================================
+   MEMORY
+========================================================= */
+
+let memory=[];
+
+let pendingImage=null;
+
+
+/* =========================================================
+   MEMORY STORAGE
+========================================================= */
+
+function saveMemory(){
+
+    localStorage.setItem(
+        "mouse_ai_memory",
+        JSON.stringify(memory.slice(-30))
+    );
+
+}
+
+
+function loadMemory(){
+
+    const data=
+        localStorage.getItem("mouse_ai_memory");
+
+    if(!data)return;
+
+    try{
+
+        memory=JSON.parse(data);
+
+        for(const m of memory){
+
+            if(m.role==="user"){
+                addUserMessage(m.content);
+            }
+
+            if(m.role==="assistant"){
+                addAIMessage(m.content);
+            }
+
+        }
+
+    }catch(e){
+
+        memory=[];
+
+    }
+
+}
+
+
+/* =========================================================
+   CHAT UI
+========================================================= */
+
+function scrollChat(){
+
+    const chatBox=
+        document.getElementById("chatBox");
+
+    chatBox.scrollTop=
+        chatBox.scrollHeight;
+
+}
+
+
+function addUserMessage(text,image=null){
+
+    const message=
+        document.createElement("div");
+
+    message.className=
+        "message user-message";
+
+
+    const bubble=
+        document.createElement("div");
+
+    bubble.className=
+        "chat-bubble user-bubble";
+
+
+    if(image){
+
+        const img=
+            document.createElement("img");
+
+        img.src=image;
+
+        img.alt=
+            "Ảnh người dùng gửi";
+
+        img.style.maxWidth="260px";
+        img.style.maxHeight="260px";
+        img.style.width="auto";
+        img.style.height="auto";
+        img.style.display="block";
+        img.style.borderRadius="10px";
+        img.style.marginBottom=
+            text ? "8px" : "0";
+
+        bubble.appendChild(img);
+
+    }
+
+
+    if(text){
+
+        const textNode=
+            document.createElement("div");
+
+        textNode.textContent=text;
+
+        bubble.appendChild(textNode);
+
+    }
+
+
+    message.appendChild(bubble);
+
+    chatBox.appendChild(message);
+
+    scrollChat();
+
+}
+
+
+/* =========================================================
+   MARKDOWN + MATH
+========================================================= */
+
+function renderMarkdown(text){
+
+    let math=[];
+
+
+    text=text.replace(
+        /\\\[([\s\S]*?)\\\]/g,
+        function(_,x){
+
+            math.push("\\["+x+"\\]");
+
+            return "MATHBLOCK"
+                +(math.length-1)
+                +"MATHBLOCK";
+
+        }
+    );
+
+
+    text=text.replace(
+        /\\\(([\s\S]*?)\\\)/g,
+        function(_,x){
+
+            math.push("\\("+x+"\\)");
+
+            return "MATHINLINE"
+                +(math.length-1)
+                +"MATHINLINE";
+
+        }
+    );
+
+
+    let html=
+        marked.parse(text,{
+            breaks:true,
+            gfm:true
+        });
+
+
+    html=html.replace(
+        /MATHBLOCK(\d+)MATHBLOCK/g,
+        function(_,i){
+
+            return math[i];
+
+        }
+    );
+
+
+    html=html.replace(
+        /MATHINLINE(\d+)MATHINLINE/g,
+        function(_,i){
+
+            return math[i];
+
+        }
+    );
+
+
+    return html;
+
+}
+
+
+function addAIMessage(text){
+
+    const message=
+        document.createElement("div");
+
+    message.className=
+        "message ai-message";
+
+
+    const avatar=
+        document.createElement("div");
+
+    avatar.className=
+        "ai-avatar";
+
+    avatar.textContent="M";
+
+
+    const bubble=
+        document.createElement("div");
+
+    bubble.className=
+        "chat-bubble ai-bubble";
+
+    bubble.innerHTML=
+        renderMarkdown(text);
+
+
+    message.appendChild(avatar);
+
+    message.appendChild(bubble);
+
+    chatBox.appendChild(message);
+
+
+    if(window.MathJax){
+
+        MathJax
+            .typesetPromise([bubble])
+            .catch(()=>{});
+
+    }
+
+
+    scrollChat();
+
+}
+
+
+/* =========================================================
+   TYPING
+========================================================= */
+
+function showTyping(){
+
+    const message=
+        document.createElement("div");
+
+    message.className=
+        "message ai-message";
+
+    message.id="typing";
+
+
+    const avatar=
+        document.createElement("div");
+
+    avatar.className=
+        "ai-avatar";
+
+    avatar.textContent="M";
+
+
+    const bubble=
+        document.createElement("div");
+
+    bubble.className=
+        "chat-bubble ai-bubble typing";
+
+
+    bubble.innerHTML=
+        "<span></span><span></span><span></span>";
+
+
+    message.appendChild(avatar);
+
+    message.appendChild(bubble);
+
+    chatBox.appendChild(message);
+
+    scrollChat();
+
+}
+
+
+function removeTyping(){
+
+    const typing=
+        document.getElementById("typing");
+
+    if(typing){
+
+        typing.remove();
+
+    }
+
+}
+
+
+/* =========================================================
+   IMAGE HANDLING
+========================================================= */
+
+function isImageFile(file){
+
+    return file &&
+           file.type &&
+           file.type.startsWith("image/");
+
+}
+
+
+function readImage(file){
+
+    return new Promise((resolve,reject)=>{
+
+        const reader=
+            new FileReader();
+
+        reader.onload=()=>{
+            resolve(reader.result);
+        };
+
+        reader.onerror=reject;
+
+        reader.readAsDataURL(file);
+
+    });
+
+}
+
+
+const input=
+    document.getElementById("input");
+
+
+input.addEventListener(
+    "paste",
+    async function(e){
+
+        const items=
+            e.clipboardData?.items;
+
+        if(!items)return;
+
+
+        for(const item of items){
+
+            if(!item.type.startsWith("image/"))
+                continue;
+
+
+            const file=
+                item.getAsFile();
+
+            if(!file)
+                continue;
+
+
+            e.preventDefault();
+
+
+            try{
+
+                const image=
+                    await readImage(file);
+
+                pendingImage=image;
+
+
+                const current=
+                    this.value.trim();
+
+
+                if(!current){
+
+                    this.value=
+                        "Ảnh đã được gửi. Hãy phân tích ảnh này.";
+
+                }
+
+
+                this.style.height="auto";
+
+                this.style.height=
+                    Math.min(
+                        this.scrollHeight,
+                        140
+                    )+"px";
+
+
+            }catch(error){
+
+                console.error(error);
+
+            }
+
+
+            break;
+
+        }
+
+    }
+);
+
+
+/* =========================================================
+   GROQ REQUEST
+========================================================= */
+
+async function askGroq(text,image){
+
+    const recentMemory=
+        memory.slice(-API_MEMORY_LIMIT);
+
+
+    const messages=[
+
+        {
+            role:"system",
+            content:SYSTEM_PROMPT
+        },
+
+        ...recentMemory
+
+    ];
+
+
+    if(image){
+
+        const lastUserIndex=
+            messages.length-1;
+
+
+        messages[lastUserIndex]={
+
+            role:"user",
+
+            content:[
+
+                {
+                    type:"text",
+                    text:text ||
+                        "Hãy phân tích ảnh này theo phạm vi STEM của Mouse AI."
+                },
+
+                {
+                    type:"image_url",
+
+                    image_url:{
+                        url:image
+                    }
+
+                }
+
+            ]
+
+        };
+
+    }
+
+
+    const response=
+        await fetch(
+
+            GROQ_API_URL,
+
+            {
+
+                method:"POST",
+
+                headers:{
+
+                    "Content-Type":
+                        "application/json",
+
+                    "Authorization":
+                        "Bearer "+GROQ_API_KEY
+
+                },
+
+                body:JSON.stringify({
+
+                    model:GROQ_MODEL,
+
+                    messages:messages,
+
+                    temperature:0.4,
+
+                    max_tokens:3072
+
+                })
+
+            }
+
+        );
+
+
+    if(!response.ok){
+
+        throw new Error(
+            "Groq request failed"
+        );
+
+    }
+
+
+    const data=
+        await response.json();
+
+
+    const answer=
+        data.choices?.[0]?.message?.content;
+
+
+    if(!answer){
+
+        throw new Error(
+            "Groq returned no answer"
+        );
+
+    }
+
+
+    return answer;
+
+}
+
+
+/* =========================================================
+   GEMINI REQUEST
+========================================================= */
+
+function memoryToGeminiContents(text,image){
+
+    const contents=[];
+
+
+    const recentMemory=
+        memory.slice(-API_MEMORY_LIMIT);
+
+
+    for(const m of recentMemory){
+
+        if(!m.content)
+            continue;
+
+
+        contents.push({
+
+            role:
+                m.role==="assistant"
+                    ? "model"
+                    : "user",
+
+            parts:[
+
+                {
+                    text:m.content
+                }
+
+            ]
+
+        });
+
+    }
+
+
+    if(image){
+
+        contents.push({
+
+            role:"user",
+
+            parts:[
+
+                {
+                    text:
+                        text ||
+                        "Hãy phân tích ảnh này theo phạm vi STEM của Mouse AI."
+                },
+
+                {
+                    inline_data:{
+                        mime_type:
+                            image.split(";")[0]
+                                .replace("data:",""),
+
+                        data:
+                            image.split(",")[1]
+                    }
+
+                }
+
+            ]
+
+        });
+
+    }else{
+
+        contents.push({
+
+            role:"user",
+
+            parts:[
+
+                {
+                    text:text
+                }
+
+            ]
+
+        });
+
+    }
+
+
+    return contents;
+
+}
+
+
+async function askGemini(text,image){
+
+    const key=GEMINI_API_KEY;
+
+
+    if(
+        !key ||
+        key==="YOUR_GEMINI_API_KEY"
+    ){
+
+        throw new Error(
+            "Gemini key unavailable"
+        );
+
+    }
+
+
+    const body={
+
+        system_instruction:{
+
+            parts:[
+
+                {
+                    text:SYSTEM_PROMPT
+                }
+
+            ]
+
+        },
+
+        contents:
+            memoryToGeminiContents(
+                text,
+                image
+            ),
+
+        generationConfig:{
+
+            temperature:0.4,
+
+            maxOutputTokens:3072
+
+        }
+
+    };
+
+
+    const response=
+        await fetch(
+
+            GEMINI_API_URL
+            +"?key="
+            +encodeURIComponent(key),
+
+            {
+
+                method:"POST",
+
+                headers:{
+
+                    "Content-Type":
+                        "application/json"
+
+                },
+
+                body:
+                    JSON.stringify(body)
+
+            }
+
+        );
+
+
+    if(!response.ok){
+
+        throw new Error(
+            "Gemini request failed"
+        );
+
+    }
+
+
+    const data=
+        await response.json();
+
+
+    const answer=
+        data.candidates?.[0]
+        ?.content?.parts
+        ?.map(part=>part.text || "")
+        .join("")
+        .trim();
+
+
+    if(!answer){
+
+        throw new Error(
+            "Gemini returned no answer"
+        );
+
+    }
+
+
+    return answer;
+
+}
+
+
+/* =========================================================
+   SEND MESSAGE
+========================================================= */
+
+async function sendMessage(){
+
+    const text=
+        input.value.trim();
+
+
+    if(!text && !pendingImage){
+
+        return;
+
+    }
+
+
+    const imageToSend=
+        pendingImage;
+
+
+    const userText=
+        text ||
+        "Hãy phân tích ảnh này.";
+
+
+    input.value="";
+
+    input.style.height="auto";
+
+
+    addUserMessage(
+        userText,
+        imageToSend
+    );
+
+
+    memory.push({
+
+        role:"user",
+
+        content:userText
+
+    });
+
+
+    saveMemory();
+
+
+    showTyping();
+
+
+    let answer=null;
+
+
+    try{
+
+        try{
+
+            if(
+                GROQ_API_KEY &&
+                GROQ_API_KEY!=="YOUR_GROQ_API_KEY"
+            ){
+
+                answer=
+                    await askGroq(
+                        userText,
+                        imageToSend
+                    );
+
+            }
+
+        }catch(groqError){
+
+            answer=null;
+
+        }
+
+
+        if(!answer){
+
+            try{
+
+                answer=
+                    await askGemini(
+                        userText,
+                        imageToSend
+                    );
+
+            }catch(geminiError){
+
+                answer=null;
+
+            }
+
+        }
+
+
+        removeTyping();
+
+
+        if(!answer){
+
+            addAIMessage(
+                "Mouse AI đang bị lỗi."
+            );
+
+            pendingImage=null;
+
+            return;
+
+        }
+
+
+        addAIMessage(answer);
+
+
+        memory.push({
+
+            role:"assistant",
+
+            content:answer
+
+        });
+
+
+        saveMemory();
+
+
+        pendingImage=null;
+
+
+    }catch(error){
+
+        removeTyping();
+
+        pendingImage=null;
+
+        addAIMessage(
+            "Mouse AI đang bị lỗi."
+        );
+
+    }
+
+}
+
+
+/* =========================================================
+   CLEAR MEMORY
+========================================================= */
+
+function clearMemory(){
+
+    if(
+        !confirm(
+            "Xóa toàn bộ memory của Mouse AI?"
+        )
+    ){
+
+        return;
+
+    }
+
+
+    memory=[];
+
+    localStorage.removeItem(
+        "mouse_ai_memory"
+    );
+
+
+    document
+        .getElementById("chatBox")
+        .innerHTML="";
+
+}
+
+
+/* =========================================================
+   START CHAT
+========================================================= */
+
+function startChat(){
+
+    document
+        .getElementById("welcome")
+        .classList.add("hidden");
+
+
+    document
+        .getElementById("app")
+        .classList.remove("hidden");
+
+
+    if(memory.length===0){
+
+        addAIMessage(
+
+            "### Chào cậu 👋\n\n"+
+            "Tớ là **Mouse AI**. Cậu có thể hỏi tớ về **STEM, Python, Blockly, Arduino, OhStem, robotics, Toán, khoa học** hoặc những câu hỏi thông thường khác.\n\n"+
+            "📷 **Nếu cậu cần giúp với một vấn đề STEM, cậu cũng có thể chụp ảnh và gửi cho tớ nhé!** Tớ sẽ kiểm tra những gì nhìn thấy được và nếu ảnh chưa đủ rõ, tớ sẽ nói thẳng thay vì đoán."
+
+        );
+
+    }
+
+
+    document
+        .getElementById("input")
+        .focus();
+
+}
+
+
+/* =========================================================
+   INPUT
+========================================================= */
+
+input.addEventListener(
+
+    "keydown",
+
+    function(e){
+
+        if(
+            e.key==="Enter" &&
+            !e.shiftKey
+        ){
+
+            e.preventDefault();
+
+            sendMessage();
+
+        }
+
+    }
+
+);
+
+
+input.addEventListener(
+
+    "input",
+
+    function(){
+
+        this.style.height="auto";
+
+        this.style.height=
+            Math.min(
+                this.scrollHeight,
+                140
+            )+"px";
+
+    }
+
+);
+
+
+/* =========================================================
+   LOAD
+========================================================= */
+
+loadMemory();
+
+
+if(memory.length>0){
+
+    document
+        .getElementById("welcome")
+        .classList.add("hidden");
+
+
+    document
+        .getElementById("app")
+        .classList.remove("hidden");
+
+}
+
+</script>
+
+</body>
+</html>
